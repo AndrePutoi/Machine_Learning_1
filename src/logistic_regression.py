@@ -208,28 +208,9 @@ def classification_metrics(y_true, y_pred, n_classes=4):
         "macro_f1": f1.mean(),
         "accuracy_pm1": np.mean(distancia <= 1),
         "mae_classes": distancia.mean(),
-        "kappa_quadratico": cohen_kappa(y_true, y_pred, n_classes, pesos="quadratico"),
         "precision": precision, "recall": recall, "f1": f1,
         "confusion_matrix": cm,
     }
-
-
-def cohen_kappa(y_true, y_pred, n_classes=4, pesos=None):
-    """
-    Kappa de Cohen: concordância acima do acaso (0 = acaso, 1 = perfeito).
-    pesos="quadratico" -> penaliza erros pelo quadrado da distância entre
-    classes; adequado aqui porque as classes de preço são ORDINAIS
-    (confundir barato com caro é pior do que com medio-barato).
-    """
-    cm = confusion_matrix(y_true, y_pred, n_classes).astype(float)
-    n = cm.sum()
-    esperado = np.outer(cm.sum(axis=1), cm.sum(axis=0)) / n
-    i, j = np.indices((n_classes, n_classes))
-    if pesos == "quadratico":
-        w = (i - j) ** 2 / (n_classes - 1) ** 2
-    else:
-        w = (i != j).astype(float)
-    return 1 - (w * cm).sum() / (w * esperado).sum()
 
 
 # ============================================================

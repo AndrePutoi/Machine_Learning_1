@@ -201,14 +201,14 @@ Os modelos treinados em Lisboa (estratégia `filter`) foram aplicados ao dataset
 
   As classes ficam equilibradas (~25% cada), por isso o acaso tem ~25% de accuracy.
 - **Modelo (`src/logistic_regression.py`):** regressão logística **multinomial (softmax)** implementada de raiz só com numpy, com entropia cruzada e full-batch gradient descent (`learning_rate = 0.1`, 1000 épocas, sem L2). Usa a estratégia `filter`, o mesmo split da secção 8 e graus 1–3.
-- **Métricas implementadas de raiz:** matriz de confusão, precision/recall/F1, balanced accuracy, kappa quadrático, ROC e AUC (one-vs-rest, macro e micro), curva precision-recall e AP, e log loss. Foram validadas contra o `sklearn` e dão valores iguais.
+- **Métricas implementadas de raiz:** matriz de confusão, precision/recall/F1, balanced accuracy, ROC e AUC (one-vs-rest, macro e micro), curva precision-recall e AP, e log loss. Foram validadas contra o `sklearn` e dão valores iguais.
 
 ### 8.2 Resultados (teste)
-| Grau | Features | Accuracy | Macro F1 | Kappa quadr. | AUC macro | AUC micro | Log loss | Accuracy ±1 classe |
-|---|---|---|---|---|---|---|---|---|
-| 1 | 51 | 0.551 | 0.549 | 0.657 | 0.796 | 0.813 | 1.028 | 0.897 |
-| **2** | 304 | **0.566** | **0.563** | **0.692** | **0.811** | **0.827** | **0.982** | **0.913** |
-| 3 | 2 328 | 0.398 | 0.351 | 0.375 | 0.662 | 0.663 | 2.794 | 0.735 |
+| Grau | Features | Accuracy | Macro F1 | AUC macro | AUC micro | Log loss | Accuracy ±1 classe |
+|---|---|---|---|---|---|---|---|
+| 1 | 51 | 0.551 | 0.549 | 0.796 | 0.813 | 1.028 | 0.897 |
+| **2** | 304 | **0.566** | **0.563** | **0.811** | **0.827** | **0.982** | **0.913** |
+| 3 | 2 328 | 0.398 | 0.351 | 0.662 | 0.663 | 2.794 | 0.735 |
 
 Métricas por classe do grau 2:
 
