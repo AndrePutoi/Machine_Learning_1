@@ -1,7 +1,7 @@
 # Relatório — Previsão do Preço de Alojamentos Airbnb em Lisboa
 
 **Machine Learning — Practical Project 1**
-Notebook principal: `project_analisys_c.ipynb` · Código: `src/`
+Notebook principal: `Airbnb_Lisboa_Predicao_Preco.ipynb` · Código: `src/`
 
 ---
 
@@ -22,7 +22,7 @@ Principais conclusões:
 2. **Graus 2–3 são o ponto ideal.** O grau 4 diverge sempre (15–17 mil features, sem tratamento das restantes variáveis contínuas).
 3. **A L2 testada (λ ≤ 0.75) não tem efeito.** Na implementação, o termo é dividido por *n* ≈ 14 mil.
 4. **O texto sozinho prevê o preço quase tão bem como as variáveis estruturadas.**
-5. **O modelo não se transfere para Nova Iorque.** Mesmo com distância ao centro em vez de coordenadas, o R² fica negativo.
+5. **O modelo não se transfere para outras cidades.** Treinado só em Lisboa, tem R² negativo em Nova Iorque, Barcelona, Barossa Valley e Amesterdão (esta com erro explosivo por um valor de `maximum_nights` de 2×10⁹), mesmo com distância ao centro em vez de coordenadas.
 
 ---
 
@@ -174,7 +174,11 @@ Mesmos hiperparâmetros da secção 8, `KFold(shuffle=True, random_state=42)`. M
 
 ---
 
-## 7. Generalização para outra cidade — Nova Iorque (secções 10–11)
+## 7. Generalização para outras cidades (secções 10–11)
+
+> **Treino só em Lisboa.** Todos os datasets desta secção (Nova Iorque, Amesterdão, Barcelona e Barossa Valley) foram usados **apenas para avaliação**, sem qualquer re-treino.
+
+### 7.1 Nova Iorque
 
 Os modelos treinados em Lisboa (estratégia `filter`) foram aplicados ao dataset de Nova Iorque (375 anúncios após o mesmo tratamento), sem novo treino.
 
@@ -187,6 +191,25 @@ Os modelos treinados em Lisboa (estratégia `filter`) foram aplicados ao dataset
 
 - **Com latitude/longitude absolutas, os resultados não fazem sentido.** As coordenadas de NY ficam a centenas de desvios-padrão da distribuição de Lisboa usada pelo `scaler`, e a expansão polinomial amplifica-as ainda mais.
 - **Substituir as coordenadas por `dist_centro_km`** (distância Haversine ao centro geográfico de cada cidade) resolve o colapso numérico. Mesmo assim, o R² continua **negativo**: o modelo é pior do que prever a média de NY. O nível de preços e a estrutura de cada mercado são diferentes, e um modelo de Lisboa não se transfere diretamente.
+
+### 7.2 Novas cidades — Amesterdão, Barcelona e Barossa Valley (secção 11.5)
+
+Mesma pipeline (estratégia `filter`, `dist_centro_km` calculada ao centro de cada cidade) e os modelos `filter_distcentro_grau{1..4}` de Lisboa, sem re-treino:
+
+| Cidade | n | Mediana do preço | R² grau 1 | R² grau 2 | R² grau 3 | R² grau 4 | MAE grau 2 |
+|---|---|---|---|---|---|---|---|
+| Barcelona | 7 443 | 249 | −0.77 | −0.66 | −0.80 | −3.67 | 120 |
+| Barossa Valley | 307 | 370 | −1.60 | −1.49 | −1.34 | −3.71 | 262 |
+| Nova Iorque (7.1) | 375 | 148 | −0.06 | −0.07 | −0.59 | −6.88 | 58 |
+| Amesterdão | 5 793 | 289 | −1.7×10⁶ | −7×10¹⁵ | −2×10²⁶ | −5×10³³ | 2.3×10⁸ |
+
+Em Lisboa a mediana do preço é 131.
+
+- **Nenhuma cidade é bem prevista**: todos os R² são negativos, ou seja, piores do que prever a média. Os graus mais altos pioram quase sempre.
+- **A explosão em Amesterdão tem uma causa concreta.** `maximum_nights` chega a 2 147 483 647 (o máximo de um inteiro de 32 bits, um "sem limite" que não foi tratado como outlier). Com a média 602 e o desvio-padrão 468 de Lisboa, isso dá cerca de **4,6 milhões de desvios-padrão**. Elevado às potências 2, 3 e 4 pela expansão polinomial, destrói o modelo (z⁴ ≈ 10²⁶). Já no grau 1 o R² é −1.7×10⁶.
+- **Nas outras cidades o pior desvio é bem menor**: ~62 desvios-padrão em Barcelona (`reviews_per_month`), ~20 em Nova Iorque (`minimum_nights`) e ~7 em Barossa Valley (`beds`, `bathrooms`, `bedrooms`). A extrapolação é má mas estável.
+- **O nível de preços também difere** (mediana 249 a 370 contra 131 em Lisboa), e há colunas `property_type_*` e `accommodates_*` de Lisboa que não existem nas cidades novas.
+- **Correção possível, não aplicada:** tratar os outliers das cidades novas como em Lisboa, ou fazer *clipping* das variáveis ao intervalo visto no treino.
 
 ---
 
@@ -254,18 +277,9 @@ Métricas por classe do grau 2:
 
 ---
 
-## 10. Limitações e trabalho futuro
 
-1. **Outliers das restantes variáveis contínuas.** Seria útil aplicar `log1p` às contagens e cap a `bedrooms`, `beds`, `bathrooms` e `maximum_nights`, ou usar `RobustScaler`/`QuantileTransformer` antes da expansão polinomial.
-2. **Otimização em graus altos.** Um learning rate menor, adaptado ao condicionamento da matriz (por exemplo 1/λ_max), ou normalização após a expansão, permitiria avaliar o grau 4 de forma justa.
-3. **L2 com λ na ordem de 10²–10⁴**, ou a fórmula do gradiente sem dividir por *n*, para testar regularização a sério, sobretudo no grau 3 e nos embeddings de 1024 dims.
-4. **Combinar embeddings de texto com as variáveis tabulares** num único modelo, ou reduzir os embeddings com PCA para permitir uma expansão quadrática completa.
-5. **Transferência entre cidades.** Seriam precisas features relativas ao mercado local (preço normalizado pela mediana da cidade, distâncias, tipologia) ou algum re-treino com dados da cidade alvo.
-6. **Problema conhecido noutro ficheiro:** `gd_results_all_strategies_degrees.csv` (gerado pelo `project_analisys.ipynb` antigo) tem resultados **idênticos** para none/cap/filter. Isto indica que foi carregada a mesma versão dos dados nas três estratégias, por isso esse ficheiro não deve ser usado para comparar tratamentos.
 
----
-
-## 11. Reprodutibilidade
+## 10. Reprodutibilidade
 
 ### Ambiente
 ```bash
@@ -288,7 +302,7 @@ Versões usadas: Python 3.12.3, pandas 3.0.6, numpy 2.5.3, scikit-learn 1.9.1, t
 ### Ficheiros
 | Ficheiro | Conteúdo |
 |---|---|
-| `project_analisys_c.ipynb` | notebook principal (secções 1–15) |
+| `Airbnb_Lisboa_Predicao_Preco.ipynb` | notebook principal (secções 1–15) |
 | `src/prepare_features.py` | classificação automática e tratamento das features |
 | `src/linear_regression.py` | regressão linear com GD, k-fold, gravação/carregamento de modelos |
 | `src/logistic_regression.py` | regressão logística softmax e métricas de classificação (ROC, AUC, …) |
