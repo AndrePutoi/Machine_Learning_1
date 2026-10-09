@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+# embeddings gerados (centenas de MB; regeneráveis com src/llm_embeddings.py)
+Data_clean/embeddings/
+.ipynb_checkpoints/
+.idea/

@@ -243,7 +243,9 @@ def build_design_matrix(df_train, df_val, df_test, scale_cols, passthrough_cols,
         poly = PolynomialFeatures(degree=degree, include_bias=False)
         X_train_poly = poly.fit_transform(df_train[scale_cols])
 
-        scaler = StandardScaler()
+        # copy=False: escala in-place sobre a matriz polinomial (no grau 4 são
+        # ~2.5 GB por cópia); o resultado numérico é o mesmo
+        scaler = StandardScaler(copy=False)
         X_train_scaled = scaler.fit_transform(X_train_poly)
 
         X_val_scaled = None

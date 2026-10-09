@@ -2,7 +2,7 @@
 data_preparation.py
 =====================
 Pipeline completo de preparação de dados para o dataset Airbnb Lisboa,
-replicando os passos do notebook `project_analisys_c.ipynb`:
+replicando os passos do notebook `Airbnb_Lisboa_Predicao_Preco.ipynb`:
 
   1. Carregamento dos dados a partir de um ficheiro .zip (contém o CSV de
      listagens)
